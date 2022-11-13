@@ -1,0 +1,15 @@
+project:
+  target: myEDW
+  outputs:
+    myEDW:
+      type: sqlserver
+      driver: 'ODBC Driver 18 for SQL Server'
+      server: host.docker.internal
+      port: 1433
+      database: WideWorldImportersDW
+      user: sa
+      password: MyPass@word
+      encrypt: True
+      trust_cert: True
+      threads: 8
+      authentication: sql
