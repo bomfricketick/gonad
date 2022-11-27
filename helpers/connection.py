@@ -1,7 +1,9 @@
 import pyodbc
 import os
 import json
-from profile import read_profile
+import os, sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
+from helpers.profile import read_profile
 from contextlib import contextmanager
 
 def keys_exists(element, *keys):
@@ -24,6 +26,7 @@ def keys_exists(element, *keys):
 def get_credentials_from_profile():
     """Read profile and return credentials"""
     profile = read_profile(profiles_dir="./")
+    # print(json.dumps(profile, indent=4))
     if not keys_exists(profile, 'project'):
         return('the root key "project" is missing from profiles.yml')
     if not keys_exists(profile, 'project', 'target'):
@@ -68,6 +71,34 @@ def bool_to_connection_string_arg(key: str, value: bool) -> str:
     """
     return f'{switch(key)}={"Yes" if value else "No"}'
 
+
+def create_a_connection_string_from_dict(credentials: dict) -> str:
+    """
+    Create a connection string from a dictionary.
+    Parameters
+    ----------
+    credentials : dict
+        The dictionary containing the credentials.
+    Returns
+    -------
+    out : str
+        The connection string.
+    """
+    con_str = []
+    for key, value in credentials.items():
+        if value is None:
+            continue
+        if isinstance(value, bool):
+            con_str.append(bool_to_connection_string_arg(key, value))
+        else:
+            con_str.append(f"{switch(key)}={{{value}}}")
+
+    return ";".join(con_str)
+
+
+
+
+# print(create_a_connection_string_from_dict(get_credentials_from_profile()))
 
 
 
@@ -139,7 +170,7 @@ def create_connection_string(credentials: dict):
         return con_str_concat
 
 
-print(create_connection_string(get_credentials_from_profile()))
+# print(create_connection_string(get_credentials_from_profile()))
 
 @contextmanager
 def open_db(connection_str: str, autocommit: bool = True):
@@ -163,3 +194,6 @@ def runSQL(con_str: str, sql: str):
 
 # test = runSQL(con_str=create_connection_string(get_credentials_from_profile()), sql="SELECT * FROM INFORMATION_SCHEMA.TABLES")
 # print(test)
+
+
+
