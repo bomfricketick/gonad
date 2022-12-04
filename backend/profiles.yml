@@ -13,3 +13,16 @@ project:
       trust_cert: True
       threads: 8
       authentication: sql
+
+    local_db:
+      type: sqlserver
+      driver: 'ODBC Driver 18 for SQL Server'
+      server: host.docker.internal
+      port: 1433
+      database: test_db
+      user: sa
+      password: MyPass@word
+      encrypt: True
+      trust_cert: True
+      threads: 8
+      authentication: sql

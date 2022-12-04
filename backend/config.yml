@@ -1,0 +1,43 @@
+project:
+  # Set how the profiling is done
+  profiling:
+    table_types: [U, V]
+    include_schemas: [Dimension, Fact]
+    exclude_schemas: [sys, information_schema, Fact]
+    column_measures: # the following measures is available
+      - row_count
+      - not_null_proportion
+      - distinct_proportion
+      - distinct_count
+      - is_unique
+      - min_value
+      - max_value
+      - avg_value
+      - std_dev_population
+      - std_dev_sample
+    # excluded_column_measures: [ std_dev_population, std_dev_sample]
+  # A
+
+  data_mart:
+    dimenstions:
+      schema: Dimension
+      tbl_prefix: null
+      tbl_suffix: null
+      identifier_suffix: ID
+      identifier_prefix: null
+      scd2_validfrom: Valid From
+      scd2_validto: Valid To
+    facts:
+      schema: Fact
+      tbl_prefix: null
+      tbl_suffix: null
+
+  tests:
+    data_vault: True
+    data_mart:
+      unique_key: True
+      orphans: True
+      not_empty: True
+      not_null: True
+
+

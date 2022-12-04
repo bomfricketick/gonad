@@ -29,3 +29,5 @@ override.tf.json
 # example: *tfplan*
 
 __pycache__
+
+output/*

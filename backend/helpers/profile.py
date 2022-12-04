@@ -1,7 +1,7 @@
 from typing import Any, Dict, Optional
 import os
 import yaml
-import pprint
+from pathlib import Path
 
 # the C version is faster, but it doesn't always exist
 try:
@@ -91,11 +91,40 @@ def read_profile(profiles_dir: str) -> Dict[str, Any]:
     return {}
 
 
+def read_file(path: str) -> Dict[str, Any]:
+    contents = None
+    if os.path.isfile(path):
+        try:
+            contents = load_file_contents(path, strip=False)
+            yaml_content = load_yaml_text(contents)
+            if not yaml_content:
+                msg = f"The file at {path} is empty"
+                return msg
+            return yaml_content
+        except:
+            print('failed')
 
-# import json
+    return {}
 
 
+def keys_exists(element, *keys):
+    '''
+    Check if *keys (nested) exists in `element` (dict).
+    '''
+    if not isinstance(element, dict):
+        raise AttributeError('keys_exists() expects dict as first argument.')
+    if len(keys) == 0:
+        raise AttributeError('keys_exists() expects at least two arguments, one given.')
 
+    _element = element
+    for key in keys:
+        try:
+            _element = _element[key]
+        except KeyError:
+            return False
+    return True
 
-
-# connection_string =
+def resolve_grandparent_path():
+    current_dir = Path(__file__).parent.resolve()
+    grandparent_dir = current_dir.parent.resolve()
+    return grandparent_dir

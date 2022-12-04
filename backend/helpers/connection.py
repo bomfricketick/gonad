@@ -3,29 +3,16 @@ import os
 import json
 import os, sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
-from helpers.profile import read_profile
+from helpers.profile import read_file, keys_exists, resolve_grandparent_path
 from contextlib import contextmanager
 
-def keys_exists(element, *keys):
-    '''
-    Check if *keys (nested) exists in `element` (dict).
-    '''
-    if not isinstance(element, dict):
-        raise AttributeError('keys_exists() expects dict as first argument.')
-    if len(keys) == 0:
-        raise AttributeError('keys_exists() expects at least two arguments, one given.')
+from decimal import Decimal
+from datetime import datetime, date
 
-    _element = element
-    for key in keys:
-        try:
-            _element = _element[key]
-        except KeyError:
-            return False
-    return True
 
-def get_credentials_from_profile():
+def get_credentials_from_profile(target: str = None):
     """Read profile and return credentials"""
-    profile = read_profile(profiles_dir="./")
+    profile = read_file(path= resolve_grandparent_path() /"profiles.yml")
     # print(json.dumps(profile, indent=4))
     if not keys_exists(profile, 'project'):
         return('the root key "project" is missing from profiles.yml')
@@ -33,13 +20,18 @@ def get_credentials_from_profile():
         return('the key "target" is missing from profiles.yml')
     if not keys_exists(profile, 'project', 'outputs'):
         return('the key "outputs" is missing from profiles.yml')
-    target = profile['project']['target']
-    outputs = profile['project']['outputs'].get(target)
+    target_default = profile['project']['target']
+    target_out = target if target else target_default
+    outputs = profile['project']['outputs'].get(target_out)
     if not outputs:
-        print('the target is not found in profiles.yml')
-        return None
+        raise Exception(f"Target: '{target_out}' was not found in profiles.yml")
     else:
         return outputs
+
+def get_type_from_credentials():
+    credentials = get_credentials_from_profile()
+    target = credentials.get('type')
+    return target
 
 
 def switch(key):
@@ -179,7 +171,7 @@ def open_db(connection_str: str, autocommit: bool = True):
         cursor = connection.cursor()
         yield cursor
     except pyodbc.DatabaseError as error:
-        print('error')
+        print(error)
     finally:
         connection.commit()
         connection.close()
@@ -187,9 +179,31 @@ def open_db(connection_str: str, autocommit: bool = True):
 
 def runSQL(con_str: str, sql: str):
     with open_db(connection_str=con_str, autocommit=True) as cursor:
-        cursor.execute(sql)
-        query_results = [dict(zip([column[0] for column in cursor.description], row)) for row in cursor.fetchall()]
+        results = cursor.execute(sql).fetchall()
+        query_results = [dict(zip([column[0] for column in cursor.description], row)) for row in results]
         return query_results
+
+
+def run_sql_on_target(sql: str, target: str = None):
+    con_str = create_connection_string(get_credentials_from_profile(target=target))
+    with open_db(connection_str=con_str, autocommit=True) as cursor:
+        results = cursor.execute(sql).fetchall()
+        query_results = [dict(zip([column[0] for column in cursor.description], row)) for row in results]
+        return query_results
+
+
+class JSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        if isinstance(obj, (datetime, date)):
+          return obj.isoformat()
+        return json.JSONEncoder.default(self, obj)
+
+
+
+def convert_to_json(results):
+    return json.dumps(results, cls=JSONEncoder, indent=4)
 
 
 # test = runSQL(con_str=create_connection_string(get_credentials_from_profile()), sql="SELECT * FROM INFORMATION_SCHEMA.TABLES")
@@ -197,3 +211,4 @@ def runSQL(con_str: str, sql: str):
 
 
 
+# get_credentials_from_profile()
