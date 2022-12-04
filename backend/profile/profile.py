@@ -5,6 +5,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.
 # from helpers.profile import read_profile
 from helpers.connection import run_sql_on_target, get_type_from_credentials, convert_to_json
 from helpers.config import get_profiling_from_config
+from helpers.generic import resolve_path_to_frontend_public
 
 from pathlib import Path, PurePath
 from typing import Callable
@@ -26,6 +27,16 @@ def save_to_file(data, filename):
 def create_filename(filename, extension):
   filename = filename.with_suffix(f'.{extension}')
   return filename
+
+def create_json_file(data, name, time, filename):
+  filename.parent.mkdir(parents=True, exist_ok=True)
+  wrapper = {
+    "name": name,
+    "created_at": time,
+    'data': json.loads(data)
+  }
+  with open(filename, 'w') as file:
+    json.dump(wrapper, file)
 
 
 def main() -> None:
@@ -72,18 +83,23 @@ def main() -> None:
   # print(f"Write to folder: {folder_date}")
 
   # path = Path(__file__).parent.parent.resolve() / 'output' / folder_date / 'profiling'
-  path = Path() / 'output' / folder_date / 'profiling'
+  # path = Path() / 'output' / folder_date / 'profiling'
+  path = resolve_path_to_frontend_public() / 'output' / folder_date / 'profiling'
+  print(f"Write to path: {path}")
   # print(test)
   filename = create_filename(path, 'json')
 
 
-  save_to_file(profiling_json, filename)
+  # save_to_file(profiling_json, filename)
+  create_json_file(data=profiling_json, name='profiling', time=datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f') , filename=filename)
 
 
 
 if __name__ == "__main__":
   main()
   # print(Path() / 'output' / 'profiling')
-
+  # cwd = Path(__file__).parent.resolve()
+  # print(cwd)
+  # print(resolve_path_to_frontend_public() / 'output' / 'profiling')
 
 
